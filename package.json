@@ -5,11 +5,13 @@
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
   "scripts": {
-    "build": "rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript"
+    "build": "rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript",
+    "test": "vite -c test/vite.config.ts --host"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/node": "^18.6.4",
     "@rollup/plugin-commonjs": "^22.0.1",
     "@rollup/plugin-node-resolve": "^13.3.0",
     "@rollup/plugin-typescript": "^8.3.4",
@@ -17,6 +19,7 @@
     "@vue/compiler-sfc": "^3.2.37",
     "rollup": "^2.77.2",
     "rollup-plugin-typescript2": "^0.32.1",
+    "sass": "^1.54.3",
     "typescript": "^4.7.4",
     "vite": "^3.0.4",
     "vue": "^3.2.37"

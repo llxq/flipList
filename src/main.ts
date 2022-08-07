@@ -1,3 +1,6 @@
-const abc: number = 123
+import { DropFlip } from './utils/DropFlip'
 
-console.log(abc)
+export {
+    DropFlip
+}
+
