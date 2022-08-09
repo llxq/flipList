@@ -1,14 +1,17 @@
 <template>
-    <FlipList v-model="list">
-        <div class="test-container">
+    <FlipList v-model="list" :config="config">
+        <div class="test-container" :class="isVertical ? 'test-container-vertical' : ''">
             <div class="children" v-for="item in list" :key="item.id">{{ item.value }}</div>
         </div>
     </FlipList>
+
+    <button @click="updatePosition">切换位置</button>
 </template>
 
 <script lang="ts" setup>
-import { reactive, ref } from 'vue'
-import FlipList from '../src/flip-list.vue'
+import { computed, ComputedRef, reactive, ref } from 'vue'
+// @ts-ignore
+import FlipList from '../dist/index.esm.js'
 
 const a = ref(1)
 
@@ -19,13 +22,26 @@ for (let i = 1; i < 20; ++i) {
     })
 }
 
+const config: ComputedRef<Partial<FlipConfig>> = computed(() => {
+    return {
+        direction: isVertical ? 'level' : 'vertical'
+    }
+})
+
+const isVertical = ref(false)
+
+const updatePosition = () => {
+    isVertical.value = !isVertical.value
+}
+
 </script>
 
 <style lang="scss">
 .test-container {
     display: flex;
-    flex-direction: column;
-    margin-left: calc(50% - 100px);
+    margin-left: 100px;
+    width: 500px;
+    flex-wrap: wrap;
 
     .children {
         width: 100px;
@@ -33,7 +49,18 @@ for (let i = 1; i < 20; ++i) {
         text-align: center;
         line-height: 60px;
         background-color: aquamarine;
+        margin-right: 20px;
         margin-bottom: 20px;
+    }
+}
+
+.test-container-vertical {
+    flex-direction: column;
+    margin-left: calc(50% - 100px);
+
+    .children {
+        margin-bottom: 20px;
+        margin-right: 20px;
     }
 }
 </style>

@@ -4,84 +4,118 @@
     </div>
 </template>
 
-<script lang="ts" setup>
-import { onMounted, ref, Ref } from 'vue'
-import { DropFlip } from './main'
+<script lang="ts">
+import { defineComponent, onMounted, PropType, ref, Ref } from 'vue'
+import { DropFlip } from './utils/DropFlip'
 
-interface PropsType {
-    modelValue: Array<any>
-    container?: HTMLElement
-}
+export default defineComponent({
+    name: 'FlipList',
+    props: {
+        modelValue: {
+            type: Object as PropType<Array<any>>,
+            required: true
+        },
+        config: Object as PropType<FlipConfig>,
+        container: Object as PropType<HTMLElement>
+    },
+    setup (props) {
+        const flipListRef: Ref<UndefinedAble<HTMLElement>> = ref(void 0)
 
-const props = withDefaults(defineProps<PropsType>(), {
-    modelValue: () => []
-})
+        const observers: Map<HTMLElement, DropFlip> = new Map()
 
-const flipListRef: Ref<UndefinedAble<HTMLElement>> = ref(void 0)
-
-const observers: Map<HTMLElement, DropFlip> = new Map()
-
-const init = (dom: HTMLElement): void => {
-    if (!observers.has(dom)) {
-        observers.set(dom, new DropFlip(dom, props.modelValue))
-    }
-}
-
-onMounted(() => {
-    // 初始化列表的拖动，如果没有设置 container 则自动初始化插槽内部的所有元素
-    if (!props.container) {
-        const children = flipListRef.value?.children
-        if (children?.length) {
-            for (let i = 0, length = children.length; i < length; ++i) {
-                const item = children.item(i) as NullAble<HTMLElement>
-                item && init(item)
+        const init = (dom: HTMLElement): void => {
+            if (!observers.has(dom)) {
+                observers.set(dom, new DropFlip(dom, props.modelValue, props.config))
             }
         }
-    } else {
-        init(props.container)
+
+        onMounted(() => {
+            // 初始化列表的拖动，如果没有设置 container 则自动初始化插槽内部的所有元素
+            if (!props.container) {
+                const children = flipListRef.value?.children
+                if (children?.length) {
+                    for (let i = 0, length = children.length; i < length; ++i) {
+                        const item = children.item(i) as NullAble<HTMLElement>
+                        item && init(item)
+                    }
+                }
+            } else {
+                init(props.container)
+            }
+        })
+
+        return { flipListRef }
     }
 })
 
 </script>
 
-<style lang="scss" scoped>
-$deep: '::v-deep()';
-
+<style lang="scss">
 @mixin box () {
     position: relative;
 }
 
 @mixin setContent () {
     content: " ";
+    background-color: #409eff;
+}
+
+@mixin verticalTips () {
+    @include setContent();
     width: 100%;
     height: 2px;
-    background-color: #409eff;
     position: absolute;
     left: 0;
+}
+
+@mixin levelTips () {
+    @include setContent();
+    width: 2px;
+    height: 100%;
+    position: absolute;
+    top: 0;
 }
 
 .flip-list {
     display: contents;
 
-    #{$deep} .bottom_tips_line {
+    .bottom_tips_line {
         @include box();
-        
+
         &::after {
-            @include setContent();
+            @include verticalTips();
             bottom: -4px;
         }
     }
 
-    #{$deep} .top_tips_line {
+    .top_tips_line {
         @include box();
-        
+
         &::before {
-            @include setContent();
+            @include verticalTips();
             top: -4px;
         }
     }
 
-    #{$deep} .flip_list_drag_class {
+    .left_tips_line {
+        @include box();
+
+        &::before {
+            @include levelTips();
+            left: -4px;
+        }
+    }
+
+    .right_tips_line {
+        @include box();
+
+        &::before {
+            @include levelTips();
+            right: -4px;
+        }
+    }
+
+    .flip_list_drag_class {
         opacity: .8;
     }
 

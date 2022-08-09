@@ -13,3 +13,5 @@ yarn-error.log*use
 *.njsproj
 *.sln
 .env.*
+
+.pnpm-debug.*

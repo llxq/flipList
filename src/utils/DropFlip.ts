@@ -8,8 +8,6 @@ enum TRANSFORM {
 export class DropFlip<T = any> {
     private readonly _styleId = Symbol('drop_flip_id').toString()
 
-    private readonly _positionLineClassNames = ['bottom_tips_line', 'top_tips_line']
-
     private _firstRectMps: FlipMapType = new Map()
 
     private _lastRectMps: FlipMapType = new Map()
@@ -22,9 +20,9 @@ export class DropFlip<T = any> {
         dragClass: 'flip_list_drag_class',
         tipsLineClass: {
             top: 'top_tips_line',
-            right: '',
+            right: 'right_tips_line',
             bottom: 'bottom_tips_line',
-            left: ''
+            left: 'left_tips_line'
         }
     }
 
@@ -61,10 +59,14 @@ export class DropFlip<T = any> {
                 if (transition) {
                     item.value.style.transition = ''
                 }
-                const { top } = diff
+                const { top, left } = diff
                 if (top) {
                     item.value.setAttribute(`data-${ TRANSFORM.translateY }`, `${ top }`)
                     item.value.style.transform = `${ TRANSFORM.translateY }(${ top }px)`
+                }
+                if (left) {
+                    item.value.setAttribute(`data-${ TRANSFORM.translateX }`, `${ left }`)
+                    item.value.style.transform = `${ TRANSFORM.translateX }(${ left }px)`
                 }
             }
         }
@@ -122,27 +124,35 @@ export class DropFlip<T = any> {
         }
     }
 
-    private _getPosition (someDom: HTMLElement, dom: HTMLElement): UndefinedAble<{ positionType: UndefinedAble<PositionType>, isTop: boolean }> {
+    private _getPositionType (someDom: HTMLElement, dom: HTMLElement): UndefinedAble<PositionType> {
         // some
-        const { left: Cleft, top: Ctop, right: Cright, bottom: Cbottom, height: Cheight } = someDom.getBoundingClientRect()
-        // target
+        const { left: Cleft, top: Ctop, right: Cright, bottom: Cbottom, height: Cheight, width: Cwidth } = someDom.getBoundingClientRect()
+        // isCloneNode
         const { left: Pleft, top: Ptop, right: Pright, bottom: Pbottom } = dom.getBoundingClientRect()
-        let positionType: UndefinedAble<PositionType> = void 0, isTop = false, diff: UndefinedAble<number> = undefined
-        if (Ptop < Cbottom && Ptop > Ctop) {
-            diff = Math.abs(Pbottom - Cbottom)
-        }
-        if (diff && typeof diff === 'number') {
-            // 是否为一半
-            if (diff > 0 && diff < Cheight) {
-                positionType = diff < (Cheight / 2) ? 'top' : 'bottom'
+        let positionType: UndefinedAble<PositionType> = void 0, diff: UndefinedAble<number> = undefined
+
+        if (this._config.direction === 'vertical') {
+            if (Ptop < Cbottom && Ptop > Ctop) {
+                diff = Math.abs(Pbottom - Cbottom)
             }
-            isTop = !(Pbottom > Ctop && Pbottom < Cbottom)
+            if (diff && typeof diff === 'number') {
+                // 是否为一半
+                if (diff > 0 && diff < Cheight) {
+                    positionType = diff < (Cheight / 2) ? 'top' : 'bottom'
+                }
+            }
+        } else {
+            if (Pleft > Cleft && Pleft < Cright) {
+                diff = Math.abs(Pright - Cright)
+            }
+            if (diff && typeof diff === 'number') {
+                if (diff > 0 && diff < Cwidth) {
+                    positionType = diff < (Cwidth / 2) ? 'left' : 'right'
+                }
+            }
         }
 
-        return {
-            positionType,
-            isTop
-        }
+        return positionType
 
     }
 
@@ -154,21 +164,32 @@ export class DropFlip<T = any> {
         const { tipsLineClass } = this._config
         Object.keys(tipsLineClass ?? {}).forEach(key => {
             const className = Reflect.get(tipsLineClass, key)
-            className && dom.classList.remove(className)
+            const classList = dom.classList
+            if (diff && diff === key) {
+                const currentClassName = tipsLineClass[diff] ?? ''
+                currentClassName && !classList.contains(currentClassName) && classList.add(currentClassName)
+            } else {
+                className && classList.remove(className)
+            }
         })
-        if (diff) {
-            dom.classList.add(tipsLineClass[diff] ?? '')
-        }
     }
 
-    private _exchangeArray (beforeIdx: number, newIdx: number) {
+    private _exchangeArray (beforeIdx: number, newIdx: number): void {
         this.list.splice(newIdx, 0, this.list.splice(beforeIdx, 1).pop()!)
+    }
+
+    private _getNewIndex (positionType: PositionType, originNewIndex: number, beforeIdx: number): number {
+        let condition = positionType === 'top'
+        if (this._config.direction === 'level') {
+            condition = positionType === 'left'
+        }
+        return condition ? originNewIndex : originNewIndex + 1
     }
 
     private _initDragEvent (dom: HTMLElement): DragEvent {
         const dragEvent = new DragEvent(dom, this._config)
         let keys: Array<HTMLElement> = Array.from(this._firstRectMps.keys())
-        let beforeIdx: number, newIdx: number, positionType: UndefinedAble<PositionType>, isTop = false
+        let beforeIdx: number, newIdx: number, positionType: UndefinedAble<PositionType>
         dragEvent.watch('start', () => {
             this._firstRectMps = this._getRectMap()
             keys = Array.from(this._firstRectMps.keys())
@@ -180,12 +201,11 @@ export class DropFlip<T = any> {
                     beforeIdx = i
                     continue movingFor
                 }
-                const { positionType: _positionType, isTop: _isTop } = this._getPosition(currentDom, movingTarget!)!
+                const _positionType = this._getPositionType(currentDom, movingTarget!)!
                 this._updateClassName(_positionType!, currentDom)
                 if (_positionType) {
                     newIdx = i
                     positionType = _positionType
-                    isTop = _isTop
                     break movingFor
                 }
             }
@@ -195,7 +215,7 @@ export class DropFlip<T = any> {
                 this._updateClassName(void 0, currentDom)
             }
             // 修改list
-            this._exchangeArray(beforeIdx, (positionType === 'top' && !isTop) ? newIdx - 1 : newIdx)
+            positionType && this._exchangeArray(beforeIdx, this._getNewIndex(positionType, newIdx, beforeIdx))
             queueMicrotask(() => {
                 this._last()
                 this._invert()

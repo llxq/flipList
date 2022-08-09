@@ -25,8 +25,10 @@ declare type TipsLineClass = {
     [key in PositionType]: string
 }
 
+declare type DirectionType = 'level' | 'vertical'
+
 declare type FlipConfig = {
     transitionTimer?: string
-    direction?: 'level' | 'vertical'
+    direction?: DirectionType
     tipsLineClass?: Partial<TipsLineClass>
 } & DragEventConfig
