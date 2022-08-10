@@ -223,7 +223,6 @@ export class DropFlip<T = any> {
                 this._updateClassName(void 0, currentDom)
             }
             // 修改list
-            positionType && console.log(beforeIdx, this._getNewIndex(positionType, newIdx, beforeIdx))
             positionType && this._exchangeArray(beforeIdx, this._getNewIndex(positionType, newIdx, beforeIdx))
             queueMicrotask(() => {
                 this._last()
