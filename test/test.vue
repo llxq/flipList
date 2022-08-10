@@ -10,10 +10,7 @@
 
 <script lang="ts" setup>
 import { computed, ComputedRef, reactive, ref } from 'vue'
-// @ts-ignore
 import FlipList from '../src/main'
-
-const a = ref(1)
 
 const list = reactive([{ id: 0, value: 0 }])
 for (let i = 1; i < 20; ++i) {
