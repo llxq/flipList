@@ -11,7 +11,7 @@
 <script lang="ts" setup>
 import { computed, ComputedRef, reactive, ref } from 'vue'
 // @ts-ignore
-import FlipList from '../dist/index.esm.js'
+import FlipList from '../src/main'
 
 const a = ref(1)
 
@@ -24,7 +24,7 @@ for (let i = 1; i < 20; ++i) {
 
 const config: ComputedRef<Partial<FlipConfig>> = computed(() => {
     return {
-        direction: isVertical ? 'level' : 'vertical'
+        direction: isVertical.value ? 'vertical' : 'level'
     }
 })
 
@@ -39,7 +39,7 @@ const updatePosition = () => {
 <style lang="scss">
 .test-container {
     display: flex;
-    margin-left: 100px;
+    margin-left: 50px;
     width: 500px;
     flex-wrap: wrap;
 
@@ -55,12 +55,10 @@ const updatePosition = () => {
 }
 
 .test-container-vertical {
+    width: 100%;
     flex-direction: column;
-    margin-left: calc(50% - 100px);
-
-    .children {
-        margin-bottom: 20px;
-        margin-right: 20px;
-    }
+    height: 500px;
+    flex-wrap: wrap;
+    align-items: flex-start;
 }
 </style>

@@ -5,7 +5,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, onMounted, PropType, ref, Ref } from 'vue'
+import { defineComponent, onMounted, PropType, ref, Ref, watchEffect } from 'vue'
 import { DropFlip } from './utils/DropFlip'
 
 export default defineComponent({
@@ -43,6 +43,11 @@ export default defineComponent({
                 init(props.container)
             }
         })
+
+        watchEffect(() => {
+            const config = props.config
+            observers?.forEach(value => value.initConfig(config))
+        }, { flush: 'post' })
 
         return { flipListRef }
     }

@@ -5,41 +5,44 @@ enum TRANSFORM {
     translateY = 'translateY'
 }
 
-export class DropFlip<T = any> {
-    private readonly _styleId = Symbol('drop_flip_id').toString()
+const getDefaultConfig = (): Required<FlipConfig> => ({
+    transitionTimer: '0.6s',
+    direction: 'vertical',
+    dragClass: 'flip_list_drag_class',
+    tipsLineClass: {
+        top: 'top_tips_line',
+        right: 'right_tips_line',
+        bottom: 'bottom_tips_line',
+        left: 'left_tips_line'
+    }
+})
 
+export class DropFlip<T = any> {
     private _firstRectMps: FlipMapType = new Map()
 
     private _lastRectMps: FlipMapType = new Map()
 
     private _events: Array<DragEvent> = []
 
-    private _config: Required<FlipConfig> = {
-        transitionTimer: '0.6s',
-        direction: 'vertical',
-        dragClass: 'flip_list_drag_class',
-        tipsLineClass: {
-            top: 'top_tips_line',
-            right: 'right_tips_line',
-            bottom: 'bottom_tips_line',
-            left: 'left_tips_line'
-        }
-    }
+    private _config: Required<FlipConfig> = getDefaultConfig()
 
     constructor (
         private readonly _container: HTMLElement,
         public list: T[],
         config?: FlipConfig
     ) {
-        this._initConfig(config)
+        this.initConfig(config)
         this._first()
     }
 
-    private _initConfig (config?: Partial<FlipConfig>): void {
-        config && Object.assign(this._config, config)
+    public initConfig (config?: Partial<FlipConfig>): void {
+        Object.assign(this._config, config ?? getDefaultConfig())
     }
 
     private _first (): void {
+        if (!this._container) {
+            throw new Error(`${ this._container } is not defined`)
+        }
         this._firstRectMps = this._getRectMap()
         this._initEvent()
     }
@@ -135,7 +138,7 @@ export class DropFlip<T = any> {
             if (Ptop < Cbottom && Ptop > Ctop) {
                 diff = Math.abs(Pbottom - Cbottom)
             }
-            if (diff && typeof diff === 'number') {
+            if (diff && typeof diff === 'number' && Pleft > Cleft && Pleft < Cright) {
                 // 是否为一半
                 if (diff > 0 && diff < Cheight) {
                     positionType = diff < (Cheight / 2) ? 'top' : 'bottom'
@@ -145,7 +148,7 @@ export class DropFlip<T = any> {
             if (Pleft > Cleft && Pleft < Cright) {
                 diff = Math.abs(Pright - Cright)
             }
-            if (diff && typeof diff === 'number') {
+            if (diff && typeof diff === 'number' && Ptop < Cbottom && Ptop > Ctop) {
                 if (diff > 0 && diff < Cwidth) {
                     positionType = diff < (Cwidth / 2) ? 'left' : 'right'
                 }
@@ -175,7 +178,12 @@ export class DropFlip<T = any> {
     }
 
     private _exchangeArray (beforeIdx: number, newIdx: number): void {
-        this.list.splice(newIdx, 0, this.list.splice(beforeIdx, 1).pop()!)
+        const pre = this.list.splice(beforeIdx, 1).pop()
+        if (pre) {
+            this.list.splice(newIdx > beforeIdx ? newIdx - 1 : newIdx, 0, pre)
+        } else {
+            throw new Error('The index of crossing the line')
+        }
     }
 
     private _getNewIndex (positionType: PositionType, originNewIndex: number, beforeIdx: number): number {
@@ -215,6 +223,7 @@ export class DropFlip<T = any> {
                 this._updateClassName(void 0, currentDom)
             }
             // 修改list
+            positionType && console.log(beforeIdx, this._getNewIndex(positionType, newIdx, beforeIdx))
             positionType && this._exchangeArray(beforeIdx, this._getNewIndex(positionType, newIdx, beforeIdx))
             queueMicrotask(() => {
                 this._last()
