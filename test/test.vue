@@ -52,7 +52,7 @@ const updatePosition = () => {
 }
 
 .test-container-vertical {
-    width: 100%;
+    width: 500px;
     flex-direction: column;
     height: 500px;
     flex-wrap: wrap;
